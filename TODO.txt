@@ -1,0 +1,18 @@
+TODO
+====
+
+Bot
+---
+
+- [ ] Connect to all networks with #bnc.im
+- [ ] Automatically reconnect on timeout
+- [ ] Identify to NickServ
+- [ ] Persist in joining #bnc.im related channels
+
+bnc.im
+------
+
+- [ ] Handle user requests (verify email and create accounts)
+- [ ] Keep an email blacklist of abusive users
+- [ ] Handle relay of #bnc.im messages between networks
+- [ ] Global and server specific broadcasts from IRC
