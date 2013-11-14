@@ -15,6 +15,11 @@ class RequestDB
 	@@requests = Hash.new
 
 	def self.load(file)
+    unless File.exists?(file)
+      puts "Error: request db #{file} does not exist. Skipping loading."
+      return
+    end
+    
 		CSV.foreach(file) do |row|
 			request = Request.new(row[0].to_i, row[3], row[7], row[4], \
 													 row[5], row[6], row[1].to_i)
