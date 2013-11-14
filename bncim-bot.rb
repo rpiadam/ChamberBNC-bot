@@ -13,6 +13,7 @@ $:.unshift File.dirname(__FILE__)
 require 'cinch'
 require 'yaml'
 require 'lib/requests'
+require 'lib/logger'
 
 $config = YAML.load_file("config/config.yaml")
 $bots = Hash.new
@@ -22,19 +23,21 @@ $threads = Array.new
 $config["servers"].each do |name, server|
   bot = Cinch::Bot.new do
     configure do |c|
-      c.nick = "bncim-test"
-      c.user = "bncim"
-      c.realname = "bnc.im administration bot"
+      c.nick = $config["bot"]["nick"]
+      c.user = $config["bot"]["user"]
+      c.realname = $config["bot"]["realname"]
       c.server = server["server"]
       c.ssl.use = server["ssl"]
-      c.sasl.username = "bncim"
-      c.sasl.password = $config["nickserv-password"]
+      c.sasl.username = $config["bot"]["saslname"]
+      c.sasl.password = $config["bot"]["saslpass"]
       c.port = server["port"]
-      c.channels = ["#bnc.im-admin"]
+      c.channels = $config["bot"]["channels"].map {|c| c = "#" + c}
       c.plugins.plugins = [RequestPlugin]
     end
   end
-  bot.loggers << Cinch::Logger::FormattedLogger.new(File.open("log/#{name}.log", "a"))
+	bot.loggers.clear
+  bot.loggers << BNCLogger.new(name, File.open("log/#{name}.log", "a"))
+	bot.loggers << BNCLogger.new(name, STDOUT)
   bot.loggers.level = :info
   $bots[name] = bot
 end
@@ -44,7 +47,6 @@ RequestDB.load($config["requestdb"])
 
 # Start the bots
 $bots.each do |key, bot|
-  puts "Starting #{key} bot..."
   $threads << Thread.new { bot.start }
 end
 

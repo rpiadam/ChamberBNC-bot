@@ -1,3 +1,11 @@
+bot:
+  nick: bncim
+  user: bncim
+  realname: bnc.im administration bot [#bnc.im]
+  saslname: bncim
+  saslpass: 
+  channels:
+    - #bnc.im
 servers:
   interlinked:
     server: irc.interlinked.me
@@ -17,5 +25,4 @@ servers:
     nick: bncim
     ssl: true
     password: example
-nickserv-password: example
-requestdb: /Users/andy/Development/bncim-bot/data/request-db
+requestdb: /path/to/data/request-db
