@@ -1,0 +1,21 @@
+servers:
+  interlinked:
+    server: irc.interlinked.me
+    port: 6697
+    nick: bncim
+    ssl: true
+    password: example
+  staticbox:
+    server: irc.staticbox.net
+    port: 6697
+    nick: bncim
+    ssl: true
+    password: example
+  alphachat:
+    server: irc.alphachat.net
+    port: 6697
+    nick: bncim
+    ssl: true
+    password: example
+nickserv-password: example
+requestdb: /Users/andy/Development/bncim-bot/data/request-db
