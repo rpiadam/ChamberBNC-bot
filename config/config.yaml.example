@@ -5,7 +5,7 @@ bot:
   saslname: bncim
   saslpass: 
   channels:
-    - #bnc.im
+    - bnc.im
 servers:
   interlinked:
     server: irc.interlinked.me
