@@ -302,7 +302,8 @@ class RequestPlugin
                 "#{ipv4.join(", ")}. #{Format(:bold, "IPv6:")} #{ipv6.join(", ")}."
       end
     else
-      m.reply "I am connected to: #{$config["servers"].keys.join(", ")}."
+      m.reply "I am connected to the following IRC servers: #{$config["servers"].keys[1..-2].join(", ")} and #{$config["servers"].keys[-1]}."
+      m.reply "I am connected to the following bnc.im servers: #{$config["zncservers"].keys[1..-2].join(", ")} and #{$config["zncservers"].keys[-1]}."
     end
   end
   
