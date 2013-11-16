@@ -137,6 +137,7 @@ class RequestPlugin
   include Cinch::Plugin
   match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)$/, method: :request, group: :request
   match /request/, method: :help, group: :request
+  match "networks", method: servers
 
   match /verify\s+(\d+)\s+(\S+)/, method: :verify
   
@@ -150,7 +151,7 @@ class RequestPlugin
   match /broadcast (.+)/, method: :broadcast
   
   match "help", method: :help
-
+  
   def request(m, username, email, server, port)
     if RequestDB.email_used?(email)
       m.reply "Sorry, that email has already been used. Please contact an " + \
@@ -256,13 +257,17 @@ class RequestPlugin
     
     $zncs[server].irc.send(msg_to_control("CloneUser templateuser #{r.username}"))
     $zncs[server].irc.send(msg_to_control("Set Nick #{r.username} #{r.username}"))
-    $zncs[server].irc.send(msg_to_control("AddNetwork #{r.username} Network1"))
     $zncs[server].irc.send(msg_to_control("SET BindHost #{r.username} #{ip}"))
     $zncs[server].irc.send(msg_to_control("SET DCCBindHost #{r.username} #{ip}"))
-    $zncs[server].irc.send(msg_to_control("SetNetwork Nick #{r.username} Network1 #{r.username}"))
-    $zncs[server].irc.send(msg_to_control("AddServer #{r.username} Network1 #{r.server} #{r.port}"))
     $zncs[server].irc.send(msg_to_control("SET DenySetBindHost #{r.username} true"))
     $zncs[server].irc.send(msg_to_control("SET Password #{r.username} #{password}"))
+    
+    Thread.new do
+      sleep 3
+      $zncs[server].irc.send(msg_to_control("AddNetwork #{r.username} Network1"))
+      $zncs[server].irc.send(msg_to_control("SetNetwork Nick #{r.username} Network1 #{r.username}"))
+      $zncs[server].irc.send(msg_to_control("AddServer #{r.username} Network1 #{r.server} #{r.port}"))
+    end
     
     Mail.send_approved(r.email, server, r.username, password)
     RequestDB.approve(r.id)
@@ -288,13 +293,16 @@ class RequestPlugin
   end
   
   def servers(m)
-    return unless m.channel == "#bnc.im-admin"
-    ips = $config["ips"]
-    ips.each do |name, addrs|
-      ipv4 = addrs["ipv4"]
-      ipv6 = addrs["ipv6"]
-      m.reply "#{Format(:bold, "[#{name}]")} #{Format(:bold, "IPv4:")} " + \
-              "#{ipv4.join(", ")}. #{Format(:bold, "IPv6:")} #{ipv6.join(", ")}."
+    if m.channel == "#bnc.im-admin"
+      ips = $config["ips"]
+      ips.each do |name, addrs|
+        ipv4 = addrs["ipv4"]
+        ipv6 = addrs["ipv6"]
+        m.reply "#{Format(:bold, "[#{name}]")} #{Format(:bold, "IPv4:")} " + \
+                "#{ipv4.join(", ")}. #{Format(:bold, "IPv6:")} #{ipv6.join(", ")}."
+      end
+    else
+      m.reply "I am connected to: #{$config["servers"].keys.join(", ")}."
     end
   end
   
