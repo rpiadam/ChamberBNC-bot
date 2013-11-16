@@ -115,23 +115,47 @@ class RequestPlugin
 	include Cinch::Plugin
 	match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)/, method: :request, group: :request
 	match /request/, method: :help, group: :request
+
+	match /verify\s+(\d+)\s+(\S+)/, method: :verify
   
   match /delete\s+(\d+)/, method: :delete, group: :admin
   match /reqinfo\s+(\d+)/, method: :reqinfo, group: :admin
 
 	def request(m, username, email, server, port)
 		r = RequestDB.create(m.user.mask, username, email, \
-															 server, port, @bot.irc.network.name)
+					               server, port, @bot.irc.network.name)
                                
-    reply = "%s %s Source: %s on %s / Date: %s / Server: %s / Port: %s / Approved: %s" % 
-     [Format(:red, "[NEW REQUEST]"), Format(:bold, "[##{r.id}]"), 
-      Format(:bold, r.source.to_s), Format(:bold, r.ircnet.to_s),
-      Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
-      Format(:bold, r.port.to_s), Format(:bold, r.approved?.to_s)]                         
-    
-    adminmsg reply
+		Mail.send_verify(r.email, r.id, r.key)
     m.reply "Your request has been submitted. Please check your " + \
             "email for information on how to proceed."
+	end
+
+	def verify(m, id, key)
+    r = RequestDB.requests[id.to_i]
+		unless r.key == key
+			m.reply "Error: code does not match. Please contact an operator for assistance."
+			return
+		end
+
+		if r.confirmed?
+			m.reply "Error: request already confirmed."
+			return
+		end
+
+		RequestDB.confirm(r.id)
+		r = RequestDB.requests[r.id]
+
+		m.reply "Request confirmed! Your request is now pending administrative approval. " + \
+			"You will receive an email with further details when it is approved. Thanks for using bnc.im."
+
+		reply = "%s %s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
+		  [Format(:red, "[NEW REQUEST]"), Format(:bold, "[##{r.id}]"),
+		   Format(:bold, r.source.to_s), Format(:bold, r.ircnet.to_s),
+			 Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
+			 Format(:bold, r.port.to_s), Format(:bold, r.confirmed?.to_s),
+			 Format(:bold, r.approved?.to_s)]
+		
+		adminmsg(reply)
 	end
   
   def reqinfo(m, id)
@@ -143,11 +167,11 @@ class RequestPlugin
       return
     end
     
-    reply = "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Approved: %s" % 
+    reply = "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" % 
       [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
        Format(:bold, r.ircnet.to_s), Format(:bold, Time.at(r.ts).ctime), 
        Format(:bold, r.server), Format(:bold, r.port.to_s), 
-       Format(:bold, r.approved?.to_s)]                         
+       Format(:bold, r.confirmed?.to_s), Format(:bold, r.approved?.to_s)]                         
     
     m.reply reply
   end

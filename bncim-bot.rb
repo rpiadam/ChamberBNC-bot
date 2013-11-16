@@ -14,6 +14,7 @@ require 'cinch'
 require 'yaml'
 require 'lib/requests'
 require 'lib/logger'
+require 'lib/mail'
 
 $config = YAML.load_file("config/config.yaml")
 $bots = Hash.new
