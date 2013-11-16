@@ -12,18 +12,19 @@ require 'net/smtp'
 require 'uuid'
 
 class Mail
-	def self.send(to_addr, message)
-		conf = $config["mail"]
-		Net::SMTP.start(conf["server"], conf["port"], 'bnc.im', conf["user"], \
-										conf["pass"], :plain) do |smtp|
-			smtp.enable_starttls
-			smtp.send_message message, 'no-reply@bnc.im',
-				to_addr
-		end
-	end
+  def self.send(to_addr, message)
+    conf = $config["mail"]
+    Net::SMTP.start(conf["server"], conf["port"], 'bnc.im', conf["user"], \
+                    conf["pass"], :plain) do |smtp|
+      smtp.enable_starttls
+      smtp.send_message message, 'no-reply@bnc.im',
+        to_addr
+    end
+  end
 
-	def self.send_verify(to_addr, id, code)
-		msgstr = <<END_OF_MESSAGE
+  def self.send_verify(to_addr, id, code)
+    
+    msgstr = <<END_OF_MESSAGE
 From: bnc.im bot <no-reply@bnc.im>
 To: #{to_addr}
 Subject: bnc.im account verification
@@ -40,6 +41,6 @@ Regards,
 bnc.im team
 END_OF_MESSAGE
 
-		self.send(to_addr, msgstr)
+    self.send(to_addr, msgstr)
   end
 end
