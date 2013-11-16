@@ -49,7 +49,11 @@ class Mail
     self.send(to_addr, msg)
   end
   
-  def self.send_approved(to_addr, server, addr, webpanel, user, pass)
+  def self.send_approved(to_addr, server, user, pass)
+    addr = $config["zncservers"][server]["addr"]
+    webpanel = $config["zncservers"][server]["public"]["panel"]
+    port = $config["zncservers"][server]["public"]["port"]
+    sslport = $config["zncservers"][server]["public"]["sslport"]
     
     msgstr = <<-END_OF_MESSAGE
       From: bnc.im bot <no-reply@bnc.im>
@@ -63,16 +67,21 @@ class Mail
       
       Your bnc.im account has been approved. Your account details are:
       
-      Server: #{server} (#{addr})
+      Server: #{addr}
+      Server name: #{server}
+      Plaintext Port: #{port}
+      SSL Port: #{sslport}
       Username: #{user}
       Password: #{pass}
       Web Panel: #{webpanel}
       
       In order to connect to your new account, you will need to connect
-      your IRC client to #{addr} on port 6667 (or 6697 for SSL) and
-      configure your IRC client to send your username and password 
+      your IRC client to #{addr} on port #{port} (or #{sslport} for SSL) 
+      and configure your client to send your bnc.im username and password 
       together in the server password field, seperated by a colon,
-      like so:  #{user}:#{pass}
+      like so: 
+      
+      #{user}:#{pass}
       
       If you need any help, please do not hestitate to join our IRC 
       channel: irc.interlinked.me #bnc.im - or connect to our webchat

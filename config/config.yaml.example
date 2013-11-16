@@ -8,11 +8,15 @@ bot:
     - bnc.im
 zncservers:
   miami:
-    server: miami.bnc.im
+    addr: mia1.bnc.im
     port: 6697
     ssl: true
     username: bncbot
-    password: example
+    password: 
+    public:
+      panel: https://mia1.bnc.im/
+      port: 6667
+      sslport: 6697
 ips:
   miami:
     ipv4:

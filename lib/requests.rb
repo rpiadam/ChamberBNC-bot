@@ -24,8 +24,10 @@ class RequestDB
       request = Request.new(row[0].to_i, row[3], row[7], row[4], \
                            row[5], row[6], row[1].to_i)
       request.key = row[2]
-      request.approved = row[8]
-      request.confirmed = row[9]
+      request.approved = true if row[8] == "true"
+      request.approved = false if row[8] == "false"
+      request.confirmed = true if row[9] == "true"
+      request.confirmed = false if row[9] == "false"
       request.ircnet = row[10]
       @@requests[request.id] = request
     end
@@ -111,7 +113,7 @@ class Request
   def initialize(id, source, username, email, server, port, ircnet, ts = nil)
     @id = id
     @ts = ts || Time.now.to_i
-    @key = RequestDB.gen_key(15)
+    @key = RequestDB.gen_key(20)
     @approved = false
     @confirmed = false
     @source = source
@@ -133,13 +135,21 @@ end
 
 class RequestPlugin
   include Cinch::Plugin
-  match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)/, method: :request, group: :request
+  match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)$/, method: :request, group: :request
   match /request/, method: :help, group: :request
 
   match /verify\s+(\d+)\s+(\S+)/, method: :verify
   
-  match /delete\s+(\d+)/, method: :delete, group: :admin
-  match /reqinfo\s+(\d+)/, method: :reqinfo, group: :admin
+  match /topic (.+)/, method: :topic
+  match /approve\s+(\d+)\s+(\S+)/, method: :approve
+  match /delete\s+(\d+)/, method: :delete
+  match /reqinfo\s+(\d+)/, method: :reqinfo
+  match "pending", method: :pending
+  match /fverify\s+(\d+)/, method: :fverify
+  match /servers/, method: :servers
+  match /broadcast (.+)/, method: :broadcast
+  
+  match "help", method: :help
 
   def request(m, username, email, server, port)
     if RequestDB.email_used?(email)
@@ -162,7 +172,13 @@ class RequestPlugin
   end
 
   def verify(m, id, key)
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found. Please contact an operator if you need assistance."
+      return
+    end
+    
     r = RequestDB.requests[id.to_i]
+    
     unless r.key == key
       m.reply "Error: code does not match. Please contact an operator for assistance."
       return
@@ -179,18 +195,137 @@ class RequestPlugin
     m.reply "Request confirmed! Your request is now pending administrative approval. " + \
       "You will receive an email with further details when it is approved. Thanks for using bnc.im."
 
-    reply = "%s %s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
-      [Format(:red, "[NEW REQUEST]"), Format(:bold, "[##{r.id}]"),
-       Format(:bold, r.source.to_s), Format(:bold, r.ircnet.to_s),
-       Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
-       Format(:bold, r.port.to_s), Format(:bold, r.confirmed?.to_s),
-       Format(:bold, r.approved?.to_s)]
+    adminmsg("#{Format(:red, "[NEW REQUEST]")} #{format_status(r)}")
+  end
+  
+  def topic(m, topic)
+    return unless m.channel == "#bnc.im-admin"
+    command = "TOPIC"
+    if topic.split(" ")[0] == "--append"
+      command = "TOPICAPPEND"
+      topic = topic.split(" ")[1..-1].join(" ")
+    elsif topic.split(" ")[0] == "--prepend"
+      command = "TOPICPREPEND"
+      topic = topic.split(" ")[1..-1].join(" ")
+    end
+    $bots.each_value do |bot|
+      bot.irc.send("PRIVMSG ChanServ :#{command} #bnc.im #{topic}")
+    end
+    m.reply "done!"
+  end
+  
+  def broadcast(m, text)
+    return unless m.channel == "#bnc.im-admin"
+    $bots.each_value do |bot|
+      bot.irc.send("PRIVMSG #bnc.im :#{Format(:bold, "[BROADCAST]")} #{text}")
+    end
     
-    adminmsg(reply)
+    $zncs.each_value do |zncbot|
+      zncbot.irc.send("PRIVMSG *status :broadcast [Broadcast Message] #{text}")
+    end
+    m.reply "done!"
+  end
+  
+  def approve(m, id, ip)
+    return unless m.channel == "#bnc.im-admin"
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found."
+      return
+    end
+    
+    r = RequestDB.requests[id.to_i]
+    
+    unless r.confirmed?
+      m.reply "Error: request ##{id} has not been confirmed by email."
+      return
+    end
+    
+    if r.approved?
+      m.reply "Error: request ##{id} is already approved."
+      return
+    end
+    
+    server = find_server_by_ip(ip)
+    
+    if server.nil?
+      m.reply "Error: #{ip} is not a valid IP address."
+      return
+    end
+    
+    password = RequestDB.gen_key(15)
+    
+    $zncs[server].irc.send(msg_to_control("CloneUser templateuser #{r.username}"))
+    $zncs[server].irc.send(msg_to_control("Set Nick #{r.username} #{r.username}"))
+    $zncs[server].irc.send(msg_to_control("AddNetwork #{r.username} Network1"))
+    $zncs[server].irc.send(msg_to_control("SET BindHost #{r.username} #{ip}"))
+    $zncs[server].irc.send(msg_to_control("SET DCCBindHost #{r.username} #{ip}"))
+    $zncs[server].irc.send(msg_to_control("SetNetwork Nick #{r.username} Network1 #{r.username}"))
+    $zncs[server].irc.send(msg_to_control("AddServer #{r.username} Network1 #{r.server} #{r.port}"))
+    $zncs[server].irc.send(msg_to_control("SET DenySetBindHost #{r.username} true"))
+    $zncs[server].irc.send(msg_to_control("SET Password #{r.username} #{password}"))
+    
+    Mail.send_approved(r.email, server, r.username, password)
+    RequestDB.approve(r.id)
+    adminmsg("Request ##{id} approved to #{server} (#{ip}) by #{m.user}.")
+  end
+  
+  def msg_to_control(msg)
+    "PRIVMSG *controlpanel :#{msg}"
+  end
+  
+  def find_server_by_ip(ip)
+    ips = $config["ips"]
+    ips.each do |server, addrs|
+      addrs.each_value do |addr|
+        addr.each do |a|
+          if a.downcase == ip.downcase
+            return server
+          end
+        end
+      end
+    end
+    return false
+  end
+  
+  def servers(m)
+    return unless m.channel == "#bnc.im-admin"
+    ips = $config["ips"]
+    ips.each do |name, addrs|
+      ipv4 = addrs["ipv4"]
+      ipv6 = addrs["ipv6"]
+      m.reply "#{Format(:bold, "[#{name}]")} #{Format(:bold, "IPv4:")} " + \
+              "#{ipv4.join(", ")}. #{Format(:bold, "IPv6:")} #{ipv6.join(", ")}."
+    end
+  end
+  
+  def fverify(m, id)
+    return unless m.channel == "#bnc.im-admin"
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found."
+      return
+    end
+    
+    r = RequestDB.requests[id.to_i]
+    
+    if r.confirmed?
+      m.reply "Error: request already confirmed."
+      return
+    end
+    
+    RequestDB.confirm(r.id)
+    r = RequestDB.requests[id.to_i]
+    
+    adminmsg("Request ##{id} email verified by #{m.user}.")
+    adminmsg("#{Format(:red, "[NEW REQUEST]")} #{format_status(r)}")
   end
   
   def reqinfo(m, id)
     return unless m.channel == "#bnc.im-admin"
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found."
+      return
+    end
+    
     r = RequestDB.requests[id.to_i]
     
     if r.nil?
@@ -198,27 +333,59 @@ class RequestPlugin
       return
     end
     
-    reply = "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" % 
-      [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
-       Format(:bold, r.ircnet.to_s), Format(:bold, Time.at(r.ts).ctime), 
-       Format(:bold, r.server), Format(:bold, r.port.to_s), 
-       Format(:bold, r.confirmed?.to_s), Format(:bold, r.approved?.to_s)]                         
-    
-    m.reply reply
+    m.reply format_status(r)
   end
   
   def delete(m, id)
     return unless m.channel == "#bnc.im-admin"
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found."
+      return
+    end
+    
     RequestDB.delete_id id.to_i
     m.reply "Deleted request ##{id}."
   end
   
+  def pending(m)
+    return unless m.channel == "#bnc.im-admin"
+    
+    pending = Array.new
+    RequestDB.requests.each_value do |r|
+      pending << r unless r.approved?
+    end
+    
+    if pending.empty?
+      m.reply "No pending requests. Woop-de-fucking-do."
+      return
+    end
+    
+    m.reply "#{pending.size} pending request(s):"
+    
+    pending.each do |request|
+      m.reply format_status(request)
+    end
+  end
+  
   def help(m)
-    m.reply "Invalid syntax. Syntax: !request <user> <email> <server> [+]<port>"
+    if m.channel == "#bnc.im-admin"
+      m.reply "Admin commands:"
+      m.reply "!pending | !reqinfo <id> | !delete <id> | !fverify <id> | !servers | !approve <id> <ip>"
+      return
+    end
+    m.reply "For new accounts, please use !request. This command can be issued in a private message. Syntax: !request <user> <email> <server> [+]<port>"
     m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked would issue: !request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667"
   end
 
   def adminmsg(text)
     $adminbot.irc.send("PRIVMSG #bnc.im-admin :#{text}")
+  end
+  
+  def format_status(r)
+    "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
+      [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
+       Format(:bold, r.ircnet.to_s), Format(:bold, Time.at(r.ts).ctime),
+       Format(:bold, r.server), Format(:bold, r.port.to_s), 
+       Format(:bold, r.confirmed?.to_s), Format(:bold, r.approved?.to_s)]
   end
 end

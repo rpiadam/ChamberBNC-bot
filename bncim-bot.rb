@@ -55,7 +55,7 @@ $config["zncservers"].each do |name, server|
 	bot = Cinch::Bot.new do
 		configure do |c|
 			c.nick = "bncbot"
-			c.server = server["server"]
+			c.server = server["addr"]
 			c.ssl.use = server["ssl"]
 			c.password = server["username"] + ":" + server["password"]
 			c.port = server["port"]
