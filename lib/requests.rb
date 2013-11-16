@@ -137,7 +137,7 @@ class RequestPlugin
   include Cinch::Plugin
   match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)$/, method: :request, group: :request
   match /request/, method: :help, group: :request
-  match "networks", method: servers
+  match "networks", method: :servers
 
   match /verify\s+(\d+)\s+(\S+)/, method: :verify
   
