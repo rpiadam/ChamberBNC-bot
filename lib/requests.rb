@@ -9,6 +9,7 @@
 ####
 
 require 'cinch'
+require 'domainatrix'
 require 'csv'
 
 class RequestDB
@@ -254,19 +255,22 @@ class RequestPlugin
     end
     
     password = RequestDB.gen_key(15)
+    netname = Domainatrix.parse(r.server).domain
     
     $zncs[server].irc.send(msg_to_control("CloneUser templateuser #{r.username}"))
     $zncs[server].irc.send(msg_to_control("Set Nick #{r.username} #{r.username}"))
-    $zncs[server].irc.send(msg_to_control("SET BindHost #{r.username} #{ip}"))
-    $zncs[server].irc.send(msg_to_control("SET DCCBindHost #{r.username} #{ip}"))
-    $zncs[server].irc.send(msg_to_control("SET DenySetBindHost #{r.username} true"))
-    $zncs[server].irc.send(msg_to_control("SET Password #{r.username} #{password}"))
+    $zncs[server].irc.send(msg_to_control("Set AltNick #{r.username} #{r.username}_"))
+    $zncs[server].irc.send(msg_to_control("Set Ident #{r.username} #{r.username}"))
+    $zncs[server].irc.send(msg_to_control("Set BindHost #{r.username} #{ip}"))
+    $zncs[server].irc.send(msg_to_control("Set DCCBindHost #{r.username} #{ip}"))
+    $zncs[server].irc.send(msg_to_control("Set DenySetBindHost #{r.username} true"))
+    $zncs[server].irc.send(msg_to_control("Set Password #{r.username} #{password}"))
     
     Thread.new do
       sleep 3
-      $zncs[server].irc.send(msg_to_control("AddNetwork #{r.username} Network1"))
-      $zncs[server].irc.send(msg_to_control("SetNetwork Nick #{r.username} Network1 #{r.username}"))
-      $zncs[server].irc.send(msg_to_control("AddServer #{r.username} Network1 #{r.server} #{r.port}"))
+      $zncs[server].irc.send(msg_to_control("AddNetwork #{r.username} #{netname}"))
+      $zncs[server].irc.send(msg_to_control("SetNetwork Nick #{r.username} #{netname} #{r.username}"))
+      $zncs[server].irc.send(msg_to_control("AddServer #{r.username} #{netname} #{r.server} #{r.port}"))
     end
     
     Mail.send_approved(r.email, server, r.username, password)
