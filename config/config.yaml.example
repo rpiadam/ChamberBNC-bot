@@ -6,6 +6,20 @@ bot:
   saslpass: 
   channels:
     - bnc.im
+zncservers:
+  miami:
+    server: miami.bnc.im
+    port: 6697
+    ssl: true
+    username: bncbot
+    password: example
+ips:
+  miami:
+    ipv4:
+      - 172.246.127.154
+    ipv6:
+      - 2605:f700:100:414::9146:65cd
+      - 2605:f700:100:414::d1a4:2287
 servers:
   interlinked:
     server: irc.interlinked.me

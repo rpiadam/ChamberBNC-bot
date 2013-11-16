@@ -18,6 +18,7 @@ require 'lib/mail'
 
 $config = YAML.load_file("config/config.yaml")
 $bots = Hash.new
+$zncs = Hash.new
 $threads = Array.new
 
 # Set up a bot for each server
@@ -40,7 +41,7 @@ $config["servers"].each do |name, server|
     end
   end
 	bot.loggers.clear
-  bot.loggers << BNCLogger.new(name, File.open("log/#{name}.log", "a"))
+  bot.loggers << BNCLogger.new(name, File.open("log/irc-#{name}.log", "a"))
 	bot.loggers << BNCLogger.new(name, STDOUT)
   bot.loggers.level = :info
   if $config["admin"]["network"] == name
@@ -49,10 +50,33 @@ $config["servers"].each do |name, server|
   $bots[name] = bot
 end
 
+# Set up the ZNC bots
+$config["zncservers"].each do |name, server|
+	bot = Cinch::Bot.new do
+		configure do |c|
+			c.nick = "bncbot"
+			c.server = server["server"]
+			c.ssl.use = server["ssl"]
+			c.password = server["username"] + ":" + server["password"]
+			c.port = server["port"]
+		end
+	end
+  bot.loggers.clear
+	bot.loggers << BNCLogger.new(name, File.open("log/znc-#{name}.log", "a"))
+	bot.loggers << BNCLogger.new(name, STDOUT)
+	bot.loggers.level = :info
+	$zncs[name] = bot
+end
+
 # Initialize the RequestDB
 RequestDB.load($config["requestdb"])
 
 # Start the bots
+
+$zncs.each do |key, bot|
+	$threads << Thread.new { bot.start }
+end
+
 $bots.each do |key, bot|
   $threads << Thread.new { bot.start }
 end
