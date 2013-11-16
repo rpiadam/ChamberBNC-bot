@@ -28,4 +28,9 @@ servers:
 admin:
   network: staticbox
   channel: bnc.im-admin
+mail:
+  server: 
+  port: 25
+  user: 
+  pass: 
 requestdb: /path/to/data/request-db
