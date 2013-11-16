@@ -11,6 +11,7 @@
 $:.unshift File.dirname(__FILE__)
 
 require 'cinch'
+require 'cinch/plugins/identify'
 require 'yaml'
 require 'lib/requests'
 require 'lib/logger'
@@ -30,14 +31,23 @@ $config["servers"].each do |name, server|
       c.realname = $config["bot"]["realname"]
       c.server = server["server"]
       c.ssl.use = server["ssl"]
-      c.sasl.username = $config["bot"]["saslname"]
-      c.sasl.password = $config["bot"]["saslpass"]
       c.port = server["port"]
       c.channels = $config["bot"]["channels"].map {|c| c = "#" + c}
       if $config["admin"]["network"] == name
         c.channels << "##{$config["admin"]["channel"]}"
       end
-      c.plugins.plugins = [RequestPlugin]
+      unless server["sasl"] == false
+        c.sasl.username = $config["bot"]["saslname"]
+        c.sasl.password = $config["bot"]["saslpass"]
+        c.plugins.plugins = [RequestPlugin]
+      else
+        c.plugins.plugins = [RequestPlugin, Cinch::Plugins::Identify]
+        c.plugins.options[Cinch::Plugins::Identify] = {
+          :username => $config["bot"]["saslname"],
+          :password => $config["bot"]["saslpass"],
+          :type     => :nickserv,
+        }
+      end
     end
   end
 	bot.loggers.clear
