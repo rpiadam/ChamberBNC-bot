@@ -25,4 +25,7 @@ servers:
     nick: bncim
     ssl: true
     password: example
+admin:
+  network: staticbox
+  channel: bnc.im-admin
 requestdb: /path/to/data/request-db

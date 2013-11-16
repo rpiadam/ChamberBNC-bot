@@ -26,6 +26,7 @@ class RequestDB
 			request.key = row[2]
 			request.approved = row[8]
 			request.confirmed = row[9]
+      request.ircnet = row[10]
 			@@requests[request.id] = request
 		end
 		@@requests.each { |id, req| puts "Request #{id} loaded: " +  
@@ -37,7 +38,7 @@ class RequestDB
 		csv_string = CSV.generate do |csv|
 			@@requests.each_value do |r|
 				csv << [r.id, r.ts, r.key, r.source, r.email, r.server, \
-					r.port, r.username, r.approved?, r.confirmed?]
+					r.port, r.username, r.approved?, r.confirmed?, r.ircnet]
 			end
 		end
 		file.write csv_string
@@ -85,8 +86,9 @@ class Request
 	attr_reader :id, :username
 	attr_accessor :key, :ts, :approved, :confirmed
 	attr_accessor :source, :email, :server, :port
+  attr_accessor :ircnet
 
-	def initialize(id, source, username, email, server, port, ts = nil)
+	def initialize(id, source, username, email, server, port, ircnet, ts = nil)
 		@id = id
 		@ts = ts || Time.now.to_i
 		@key = RequestDB.gen_key(15)
@@ -94,6 +96,7 @@ class Request
 		@confirmed = false
 		@source = source
 		@username = username
+    @ircnet = ircnet
 		@email = email
 		@server = server
 		@port = port
@@ -118,15 +121,17 @@ class RequestPlugin
 
 	def request(m, username, email, server, port)
 		r = RequestDB.create(m.user.mask, username, email, \
-															 server, port)
+															 server, port, @bot.irc.network.name)
                                
-    reply = "%s %s Source: %s / Date: %s / Sever: %s / Port: %s / Approved: %s" % 
-     [Format(:red, "[NEW]"), Format(:bold, "[##{r.id}]"), 
-      Format(:bold, r.source.to_s), Format(:bold, Time.at(r.ts).ctime), 
-      Format(:bold, r.server), Format(:bold, r.port.to_s), 
-      Format(:bold, r.approved?.to_s)]                         
+    reply = "%s %s Source: %s on %s / Date: %s / Server: %s / Port: %s / Approved: %s" % 
+     [Format(:red, "[NEW REQUEST]"), Format(:bold, "[##{r.id}]"), 
+      Format(:bold, r.source.to_s), Format(:bold, r.ircnet.to_s),
+      Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
+      Format(:bold, r.port.to_s), Format(:bold, r.approved?.to_s)]                         
     
-    Channel("#bnc.im-admin").send reply
+    adminmsg reply
+    m.reply "Your request has been submitted. Please check your " + \
+            "email for information on how to proceed."
 	end
   
   def reqinfo(m, id)
@@ -138,10 +143,11 @@ class RequestPlugin
       return
     end
     
-    reply = "%s Source: %s / Date: %s / Sever: %s / Port: %s / Approved: %s" % 
+    reply = "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Approved: %s" % 
       [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
-       Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server), 
-       Format(:bold, r.port.to_s), Format(:bold, r.approved?.to_s)]                         
+       Format(:bold, r.ircnet.to_s), Format(:bold, Time.at(r.ts).ctime), 
+       Format(:bold, r.server), Format(:bold, r.port.to_s), 
+       Format(:bold, r.approved?.to_s)]                         
     
     m.reply reply
   end
@@ -156,4 +162,8 @@ class RequestPlugin
     m.reply "Invalid syntax. Syntax: !request <user> <email> <server> [+]<port>"
     m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked would issue: !request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667"
   end
+
+	def adminmsg(text)
+    $adminbot.irc.send("PRIVMSG #bnc.im-admin :#{text}")
+	end
 end

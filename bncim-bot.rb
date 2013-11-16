@@ -32,6 +32,9 @@ $config["servers"].each do |name, server|
       c.sasl.password = $config["bot"]["saslpass"]
       c.port = server["port"]
       c.channels = $config["bot"]["channels"].map {|c| c = "#" + c}
+      if $config["admin"]["network"] == name
+        c.channels << "##{$config["admin"]["channel"]}"
+      end
       c.plugins.plugins = [RequestPlugin]
     end
   end
@@ -39,6 +42,9 @@ $config["servers"].each do |name, server|
   bot.loggers << BNCLogger.new(name, File.open("log/#{name}.log", "a"))
 	bot.loggers << BNCLogger.new(name, STDOUT)
   bot.loggers.level = :info
+  if $config["admin"]["network"] == name
+    $adminbot = bot
+  end
   $bots[name] = bot
 end
 
