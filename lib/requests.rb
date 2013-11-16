@@ -29,8 +29,6 @@ class RequestDB
       request.ircnet = row[10]
 			@@requests[request.id] = request
 		end
-		@@requests.each { |id, req| puts "Request #{id} loaded: " +  
-			"#{req.inspect}" }
 	end
 
 	def self.save(file)
@@ -47,6 +45,28 @@ class RequestDB
 
 	def self.requests
 		@@requests
+	end
+
+	def self.email_used?(email)
+    @@requests.each_value do |request|
+			if request.email.downcase == email.downcase
+				return true
+			else
+				next
+			end
+		end
+		return false
+	end
+
+	def self.username_used?(user)
+		@@requests.each_value do |request|
+			if request.username.downcase == user.downcase
+				return true
+			else
+				next
+			end
+		end
+		return false
 	end
 
 	def self.create(*args)
@@ -122,10 +142,21 @@ class RequestPlugin
   match /reqinfo\s+(\d+)/, method: :reqinfo, group: :admin
 
 	def request(m, username, email, server, port)
+		if RequestDB.email_used?(email)
+			m.reply "Sorry, that email has already been used. Please contact an " + \
+			        "operator if you need help."
+			return
+		elsif RequestDB.username_used?(username)
+			m.reply "Error: that username has already been used. Please try another, or " + \
+				      "contact an operator for help."
+			return
+		end
+
 		r = RequestDB.create(m.user.mask, username, email, \
 					               server, port, @bot.irc.network.name)
-                               
+
 		Mail.send_verify(r.email, r.id, r.key)
+                               
     m.reply "Your request has been submitted. Please check your " + \
             "email for information on how to proceed."
 	end
