@@ -52,3 +52,5 @@ mail:
   user: 
   pass: 
 requestdb: /path/to/data/request-db
+notifymail:
+  - mail@mail.com

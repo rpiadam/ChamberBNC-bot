@@ -48,7 +48,34 @@ class Mail
 
     self.send(to_addr, msg)
   end
-  
+
+  def self.request_waiting(to_addr, r)
+    msgstr = <<-END_OF_MESSAGE
+      From: bnc.im bot <no-reply@bnc.im>
+      To: #{to_addr}
+      Reply-to: admin@bnc.im
+      Subject: bnc.im account request - ##{r.id} for #{r.username}
+      Date: #{Time.now.ctime}
+      Message-Id: <#{UUID.generate}@bnc.im>
+
+      There is a bnc.im account waiting to be approved. Details:
+
+      ID: #{r.id}
+      Username: #{r.username}
+      Source: #{r.source} on #{r.ircnet}
+      Server: #{r.server} #{r.port}
+      Email: #{r.email}
+      Timestamp: #{Time.at(r.ts).ctime}
+
+      Regards,
+      bnc.im bot
+    END_OF_MESSAGE
+
+    msg = msgstr.lines.map { |l| l.strip }.join("\r\n")
+
+    self.send(to_addr, msg)
+  end
+
   def self.send_approved(to_addr, server, user, pass)
     addr = $config["zncservers"][server]["addr"]
     webpanel = $config["zncservers"][server]["public"]["panel"]

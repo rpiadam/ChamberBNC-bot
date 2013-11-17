@@ -197,6 +197,9 @@ class RequestPlugin
     m.reply "Request confirmed! Your request is now pending administrative approval. " + \
       "You will receive an email with further details when it is approved. Thanks for using bnc.im."
 
+    $config["notifymail"].each do |email|
+      Mail.request_waiting(email, r)
+    end
     adminmsg("#{Format(:red, "[NEW REQUEST]")} #{format_status(r)}")
   end
   
@@ -395,10 +398,11 @@ class RequestPlugin
   end
   
   def format_status(r)
-    "%s Source: %s on %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
+    "%s Source: %s on %s / Email: %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
       [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
-       Format(:bold, r.ircnet.to_s), Format(:bold, Time.at(r.ts).ctime),
-       Format(:bold, r.server), Format(:bold, r.port.to_s), 
-       Format(:bold, r.confirmed?.to_s), Format(:bold, r.approved?.to_s)]
+       Format(:bold, r.ircnet.to_s), Format(:bold, r.email.to_s),
+       Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
+       Format(:bold, r.port.to_s), Format(:bold, r.confirmed?.to_s),
+       Format(:bold, r.approved?.to_s)]
   end
 end
