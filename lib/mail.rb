@@ -66,6 +66,7 @@ class Mail
       Server: #{r.server} #{r.port}
       Email: #{r.email}
       Timestamp: #{Time.at(r.ts).ctime}
+      Requested server: #{r.reqserver || "not specified"}
 
       Regards,
       bnc.im bot

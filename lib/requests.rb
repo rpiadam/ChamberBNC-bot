@@ -30,6 +30,7 @@ class RequestDB
       request.confirmed = true if row[9] == "true"
       request.confirmed = false if row[9] == "false"
       request.ircnet = row[10]
+      request.reqserver = row[11]
       @@requests[request.id] = request
     end
   end
@@ -39,7 +40,8 @@ class RequestDB
     csv_string = CSV.generate do |csv|
       @@requests.each_value do |r|
         csv << [r.id, r.ts, r.key, r.source, r.email, r.server, \
-          r.port, r.username, r.approved?, r.confirmed?, r.ircnet]
+          r.port, r.username, r.approved?, r.confirmed?, r.ircnet,\
+          r.reqserver]
       end
     end
     file.write csv_string
@@ -98,6 +100,11 @@ class RequestDB
     @@requests[id].approved = approved
     RequestDB.save($config["requestdb"])
   end
+  
+  def self.set_requested_server(id, value)
+    @@requests[id].reqserver = value
+    RequestDB.save($config["requestdb"])
+  end
 
   def self.delete_id(id)
     @@requests.delete id
@@ -109,7 +116,7 @@ class Request
   attr_reader :id, :username
   attr_accessor :key, :ts, :approved, :confirmed
   attr_accessor :source, :email, :server, :port
-  attr_accessor :ircnet
+  attr_accessor :ircnet, :reqserver
 
   def initialize(id, source, username, email, server, port, ircnet, ts = nil)
     @id = id
@@ -123,6 +130,7 @@ class Request
     @email = email
     @server = server
     @port = port
+    @reqserver = nil
   end
 
   def approved?
@@ -137,6 +145,7 @@ end
 class RequestPlugin
   include Cinch::Plugin
   match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)$/, method: :request, group: :request
+  match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)\s+(\w+)$/, method: :request, group: :request
   match /request/, method: :help, group: :request
   match "networks", method: :servers
 
@@ -153,7 +162,7 @@ class RequestPlugin
   
   match "help", method: :help
   
-  def request(m, username, email, server, port)
+  def request(m, username, email, server, port, reqserver = nil)
     if RequestDB.email_used?(email)
       m.reply "Sorry, that email has already been used. Please contact an " + \
               "operator if you need help."
@@ -163,9 +172,19 @@ class RequestPlugin
               "contact an operator for help."
       return
     end
-
-    r = RequestDB.create(m.user.mask, username, email, \
-                         server, port, @bot.irc.network.name)
+    
+    unless reqserver.nil?
+      unless $config["zncservers"].keys.include? reqserver.downcase
+        m.reply "Error: #{reqserver} is not a valid bnc.im server. " + \
+                "Please pick from: #{$config["zncservers"].keys.join(", ")}"
+        return
+      end
+    end
+    
+    r = RequestDB.create(m.user.mask, username, email, server,\
+                         port, @bot.irc.network.name)
+                         
+    RequestDB.set_requested_server(r.id, reqserver) unless reqserver.nil?
 
     Mail.send_verify(r.email, r.id, r.key)
                                
@@ -389,8 +408,9 @@ class RequestPlugin
       m.reply "!pending | !reqinfo <id> | !delete <id> | !fverify <id> | !servers | !approve <id> <ip>"
       return
     end
-    m.reply "For new accounts, please use !request. This command can be issued in a private message. Syntax: !request <user> <email> <server> [+]<port>"
-    m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked would issue: !request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667"
+    m.reply "#{Format(:bold, "Syntax: !request <user> <email> <server> [+]<port> [bnc.im server]")}. Parameters in brackets are not required. This command can be issued in a private message."
+    m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked on our chicago server would issue: " + \
+             Format(:bold, "!request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667 chicago")
   end
 
   def adminmsg(text)
@@ -398,11 +418,11 @@ class RequestPlugin
   end
   
   def format_status(r)
-    "%s Source: %s on %s / Email: %s / Date: %s / Server: %s / Port: %s / Confirmed: %s / Approved: %s" %
+    "%s Source: %s on %s / Email: %s / Date: %s / Server: %s / Port: %s / Requested Server: %s / Confirmed: %s / Approved: %s" %
       [Format(:bold, "[##{r.id}]"), Format(:bold, r.source.to_s), 
        Format(:bold, r.ircnet.to_s), Format(:bold, r.email.to_s),
        Format(:bold, Time.at(r.ts).ctime), Format(:bold, r.server),
-       Format(:bold, r.port.to_s), Format(:bold, r.confirmed?.to_s),
-       Format(:bold, r.approved?.to_s)]
+       Format(:bold, r.port.to_s), Format(:bold, "#{r.reqserver || "N/A"}"),
+       Format(:bold, r.confirmed?.to_s), Format(:bold, r.approved?.to_s)]
   end
 end
