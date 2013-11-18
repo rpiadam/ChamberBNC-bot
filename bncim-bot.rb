@@ -14,6 +14,7 @@ require 'cinch'
 require 'cinch/plugins/identify'
 require 'yaml'
 require 'lib/requests'
+require 'lib/relay'
 require 'lib/logger'
 require 'lib/mail'
 
