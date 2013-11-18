@@ -148,6 +148,8 @@ class RequestPlugin
   match /request\s+(\w+)\s+(\S+)\s+(\S+)\s+(\+?\d+)\s+(\w+)$/, method: :request, group: :request
   match /request/, method: :help, group: :request
   match "networks", method: :servers
+  match "web", method: :web
+  match "setup", method: :setup
 
   match /verify\s+(\d+)\s+(\S+)/, method: :verify
   
@@ -297,6 +299,7 @@ class RequestPlugin
     
     Mail.send_approved(r.email, server, r.username, password)
     RequestDB.approve(r.id)
+    allmsg("#{r.source.split("!")[0]}: your request ##{r.id} has been approved :)")
     adminmsg("Request ##{id} approved to #{server} (#{ip}) by #{m.user}.")
   end
   
@@ -381,6 +384,12 @@ class RequestPlugin
     RequestDB.delete_id id.to_i
     m.reply "Deleted request ##{id}."
   end
+
+  def allmsg(m)
+    $bots.each do |bot|
+      bot.irc.send("PRIVMSG #bnc.im :#{m}")
+    end
+  end
   
   def pending(m)
     return unless m.channel == "#bnc.im-admin"
@@ -408,9 +417,17 @@ class RequestPlugin
       m.reply "!pending | !reqinfo <id> | !delete <id> | !fverify <id> | !servers | !approve <id> <ip>"
       return
     end
-    m.reply "#{Format(:bold, "Syntax: !request <user> <email> <server> [+]<port> [bnc.im server]")}. Parameters in brackets are not required. This command can be issued in a private message."
+    m.reply "#{Format(:bold, "Syntax: !request <user> <email> <server> [+]<port> [bnc.im server]")}. Parameters in brackets are not required. A + before the port denotes SSL. This command can be issued in a private message."
     m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked on our chicago server would issue: " + \
              Format(:bold, "!request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667 chicago")
+  end
+
+  def web(m)
+    m.reply "http://bnc.im"
+  end
+
+  def setup(m)
+    m.reply "http://bnc.im/setup.html"
   end
 
   def adminmsg(text)
