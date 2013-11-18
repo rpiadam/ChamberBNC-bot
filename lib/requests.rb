@@ -386,7 +386,7 @@ class RequestPlugin
   end
 
   def allmsg(m)
-    $bots.each do |bot|
+    $bots.each do |network, bot|
       bot.irc.send("PRIVMSG #bnc.im :#{m}")
     end
   end
