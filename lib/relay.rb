@@ -14,6 +14,7 @@ class RelayPlugin
   match //, method: :relay
   
   def relay(m)
+    return unless m.channel == "#bnc.im"
     network = Format(:bold, "[#{@bot.irc.network}]")
     message = "#{network} <#{m.user.nick}> #{m.message}"
     send_relay(message)
@@ -21,7 +22,7 @@ class RelayPlugin
   
   def send_relay(m)
     $bots.each do |network, bot|
-      unless bot == @bot
+      unless bot.irc.network == @bot.network
         bot.irc.send("PRIVMSG #bnc.im :#{m}")
       end
     end
