@@ -41,7 +41,7 @@ $config["servers"].each do |name, server|
         c.sasl.password = $config["bot"]["saslpass"]
         c.plugins.plugins = [RequestPlugin]
       else
-        c.plugins.plugins = [RequestPlugin, Cinch::Plugins::Identify]
+        c.plugins.plugins = [RelayPlugin, RequestPlugin, Cinch::Plugins::Identify]
         c.plugins.options[Cinch::Plugins::Identify] = {
           :username => $config["bot"]["saslname"],
           :password => $config["bot"]["saslpass"],
