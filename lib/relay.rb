@@ -11,18 +11,22 @@
 class RelayPlugin
   include Cinch::Plugin
   
-  match //, method: :relay
+  match /.*/, method: :relay, use_prefix: false
   
   def relay(m)
     return unless m.channel == "#bnc.im"
-    network = Format(:bold, "[#{@bot.irc.network}]")
-    message = "#{network} <#{m.user.nick}> #{m.message}"
+    network = Format(:bold, "[#{@bot.irc.network.name}]")
+    if m.action?
+      message = "#{network} * #{m.user.nick} #{m.action_message}"
+    else
+      message = "#{network} <#{m.user.nick}> #{m.message}"
+    end
     send_relay(message)
   end
   
   def send_relay(m)
     $bots.each do |network, bot|
-      unless bot.irc.network == @bot.network
+      unless bot.irc.network == @bot.irc.network
         bot.irc.send("PRIVMSG #bnc.im :#{m}")
       end
     end
