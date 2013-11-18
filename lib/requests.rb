@@ -299,7 +299,7 @@ class RequestPlugin
     
     Mail.send_approved(r.email, server, r.username, password)
     RequestDB.approve(r.id)
-    allmsg("#{r.source.split("!")[0]}: your request ##{r.id} has been approved :)")
+    allmsg("#{r.source.nick}: your request ##{r.id} has been approved :)")
     adminmsg("Request ##{id} approved to #{server} (#{ip}) by #{m.user}.")
   end
   
