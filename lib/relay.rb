@@ -11,7 +11,10 @@
 class RelayPlugin
   include Cinch::Plugin
   
-  match /.*/, method: :relay, use_prefix: false
+  listen_to :message, method: :relay
+  listen_to :leaving, method: :relay_part
+  listen_to :join, method: :relay_join
+  
   
   def relay(m)
     return unless m.channel == "#bnc.im"
@@ -21,6 +24,20 @@ class RelayPlugin
     else
       message = "#{network} <#{m.user.nick}> #{m.message}"
     end
+    send_relay(message)
+  end
+  
+  def relay_part(m)
+    return unless m.channel == "#bnc.im"
+    network = Format(:bold, "[#{@bot.irc.network.name}]")
+    message = "#{network} - #{m.user.nick} has left #bnc.im."
+    send_relay(message)
+  end
+  
+  def relay_join(m)
+    return unless m.channel == "#bnc.im"
+    network = Format(:bold, "[#{@bot.irc.network.name}]")
+    message = "#{network} - #{m.user.nick} has joined #bnc.im."
     send_relay(message)
   end
   
