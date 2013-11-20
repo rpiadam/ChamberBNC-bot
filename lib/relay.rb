@@ -29,7 +29,7 @@ class RelayPlugin
     send_relay(message)
   end
   
-  def relay_part(m, actionuser)
+  def relay_part(m, actionuser = nil)
     return unless m.channel == "#bnc.im"
     return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
