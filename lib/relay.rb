@@ -18,6 +18,7 @@ class RelayPlugin
   
   def relay(m)
     return unless m.channel == "#bnc.im"
+    return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
     if m.action?
       message = "#{network} * #{m.user.nick} #{m.action_message}"
@@ -27,8 +28,9 @@ class RelayPlugin
     send_relay(message)
   end
   
-  def relay_part(m)
+  def relay_part(m, actionuser)
     return unless m.channel == "#bnc.im"
+    return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
     message = "#{network} - #{m.user.nick} has left #bnc.im."
     send_relay(message)
@@ -36,6 +38,7 @@ class RelayPlugin
   
   def relay_join(m)
     return unless m.channel == "#bnc.im"
+    return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
     message = "#{network} - #{m.user.nick} has joined #bnc.im."
     send_relay(message)
