@@ -13,7 +13,6 @@ class RelayPlugin
   
   listen_to :message, method: :relay
   listen_to :leaving, method: :relay_part
-	listen_to :quit, method: :relay_part
   listen_to :join, method: :relay_join
   
   
@@ -30,7 +29,7 @@ class RelayPlugin
   end
   
   def relay_part(m, actionuser = nil)
-    return unless m.channel == "#bnc.im"
+    return unless m.channel == "#bnc.im" or m.command == "QUIT"
     return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
     message = "#{network} - #{m.user.nick} has left #bnc.im."
