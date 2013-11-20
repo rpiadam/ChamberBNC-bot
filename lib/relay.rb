@@ -32,7 +32,14 @@ class RelayPlugin
     return unless m.channel == "#bnc.im" or m.command == "QUIT"
     return if m.user.nick == @bot.nick
     network = Format(:bold, "[#{@bot.irc.network.name}]")
-    message = "#{network} - #{m.user.nick} has left #bnc.im."
+    if m.command == "PART"
+      action = "parted #bnc.im"
+    elsif m.command == "QUIT"
+      action = "quit"
+    else
+      action = "left #bnc.im"
+    end
+    message = "#{network} - #{m.user.nick} has #{action}."
     send_relay(message)
   end
   
