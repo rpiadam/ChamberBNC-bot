@@ -13,6 +13,7 @@ class RelayPlugin
   
   listen_to :message, method: :relay
   listen_to :leaving, method: :relay_part
+	listen_to :quit, method: :relay_part
   listen_to :join, method: :relay_join
   
   
