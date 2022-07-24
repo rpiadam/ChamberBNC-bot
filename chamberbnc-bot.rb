@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 ####
-## bnc.im administration bot
+## chamberBNC administration bot
 ##
-## Copyright (c) 2013 Andrew Northall
+## Copyright (c) 2022 Andrew Northall
 ##
 ## MIT License
 ## See LICENSE file for details.
