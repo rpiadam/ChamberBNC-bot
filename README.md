@@ -1,7 +1,7 @@
-bncim-bot
+chamberbnc-bot
 =========
 
-bnc.im public bnc service administration bot. Intended for private use only, but open sourced. 
+ChamberBNC public bnc service administration bot. Intended for private use only, but open sourced. 
 
 License
 =======
