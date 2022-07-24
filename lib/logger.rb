@@ -1,8 +1,8 @@
 ####
-### bnc.im administration bot
+### chamberbnc administration bot
 ### logger
 ###
-### Copyright (c) 2013 Andrew Northall
+### Copyright (c) 2022 Andrew Northall
 ###
 ### MIT License
 ### See LICENSE file for details.
