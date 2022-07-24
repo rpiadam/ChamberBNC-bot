@@ -1,20 +1,20 @@
 bot:
-  nick: bncim
-  user: bncim
-  realname: bnc.im administration bot [#bnc.im]
+  nick: chamberbnc
+  user: chamberbnc
+  realname: chamberbnc administration bot [#chamberbnc]
   saslname: bncim
   saslpass: 
   channels:
-    - bnc.im
+    - chamberbnc
 zncservers:
   miami:
-    addr: mia1.bnc.im
+    addr: znc.chamberirc.net
     port: 6697
     ssl: true
-    username: bncbot
+    username: chamberbnc
     password: 
     public:
-      panel: https://mia1.bnc.im/
+      panel: https://znc.chamberirc.net/
       port: 6667
       sslport: 6697
 ips:
@@ -45,7 +45,7 @@ servers:
     password: example
 admin:
   network: staticbox
-  channel: bnc.im-admin
+  channel: chamberbnc-admin
 mail:
   server: 
   port: 25
