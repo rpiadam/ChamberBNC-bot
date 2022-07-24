@@ -25,22 +25,24 @@ class Mail
   def self.send_verify(to_addr, id, code)
     
     msgstr = <<-END_OF_MESSAGE
-      From: bnc.im bot <no-reply@bnc.im>
+      From: ChamberBNC <bot@chamberirc.net>
       To: #{to_addr}
-      Reply-to: admin@bnc.im
-      Subject: bnc.im account verification
+      Reply-to: admin@chamberirc.net
+      Subject: ChamberBNC account verification
       Date: #{Time.now.ctime}
-      Message-Id: <#{UUID.generate}@bnc.im>
+      Message-Id: <#{UUID.generate}@chamberirc.net>
 
-      Someone, hopefully you, requested an account in the http://bnc.im IRC channel. If this was you, please send
+      Oi Oiiii
+      
+      Someone, hopefully you, requested an account for ChamberBNC in #chamberBNC on irc.chamberirc.net. If this was you, please send
 
       !verify #{id} #{code} 
 
-      in either #bnc.im or in a private message to the bot. If you need any help, please visit http://bnc.im/webchat.html.
+      in either #chamberBNC or in a private message to the bot. If you need any help, please visit https://chamberirc.net/chat
 
       Regards,
-      bnc.im team
-			http://bnc.im/
+      ChamberBNC Team
+			https://chamberirc.net
     END_OF_MESSAGE
     
     # remove whitespace from above
@@ -51,14 +53,16 @@ class Mail
 
   def self.request_waiting(to_addr, r)
     msgstr = <<-END_OF_MESSAGE
-      From: bnc.im bot <no-reply@bnc.im>
+      From: ChamberBNC <bot@chamberirc.net>
       To: #{to_addr}
-      Reply-to: admin@bnc.im
-      Subject: bnc.im account request - ##{r.id} for #{r.username}
+      Reply-to: admin@chamberirc.net
+      Subject: ChamberBNC account request - ##{r.id} for #{r.username}
       Date: #{Time.now.ctime}
-      Message-Id: <#{UUID.generate}@bnc.im>
+      Message-Id: <#{UUID.generate}@chamberirc.net>
 
-      There is a bnc.im account waiting to be approved. Details:
+      Admin,
+
+      There is a ChamberBNC account waiting to be approved. Details:
 
       ID: #{r.id}
       Username: #{r.username}
@@ -69,7 +73,7 @@ class Mail
       Requested server: #{r.reqserver || "not specified"}
 
       Regards,
-      bnc.im bot
+      ChamberBNC bot
     END_OF_MESSAGE
 
     msg = msgstr.lines.map { |l| l.strip }.join("\r\n")
@@ -84,16 +88,16 @@ class Mail
     sslport = $config["zncservers"][server]["public"]["sslport"]
     
     msgstr = <<-END_OF_MESSAGE
-      From: bnc.im bot <no-reply@bnc.im>
+      From: ChamberBNC <bot@chamberirc.net>
       To: #{to_addr}
-      Reply-to: admin@bnc.im
-      Subject: bnc.im account approved
+      Reply-to: admin@chamberirc.net
+      Subject: ChamberBNC account approved
       Date: #{Time.now.ctime}
-      Message-Id: <#{UUID.generate}@bnc.im>
+      Message-Id: <#{UUID.generate}@chamberirc.net>
       
       Dear #{user},
       
-      Your bnc.im account has been approved. Your account details are:
+      Your ChamberBNC account has been approved. Your account details are:
       
       Server: #{addr}
       Server name: #{server}
@@ -112,12 +116,12 @@ class Mail
       #{user}:#{pass}
       
       If you need any help, please do not hestitate to join our IRC 
-      channel: irc.interlinked.me #bnc.im - or connect to our webchat
-      at https://bnc.im/webchat.html.
+      channel: irc.chamberirc.net #ChamberBNC - or connect to our webchat
+      at https://chamberirc.net/chat.
       
       Regards,
-      bnc.im team
-			http://bnc.im/
+      ChamberBNC Team
+			https://chamberirc.net/
     END_OF_MESSAGE
     
     # remove whitespace from above
