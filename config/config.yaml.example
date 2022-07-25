@@ -25,26 +25,14 @@ ips:
       - 2605:f700:100:414::9146:65cd
       - 2605:f700:100:414::d1a4:2287
 servers:
-  interlinked:
-    server: irc.interlinked.me
-    port: 6697
-    nick: bncim
-    ssl: true
-    password: example
-  staticbox:
-    server: irc.staticbox.net
-    port: 6697
-    nick: bncim
-    ssl: true
-    password: example
-  alphachat:
-    server: irc.alphachat.net
+  chamber:
+    server: irc.chamberirc.net
     port: 6697
     nick: bncim
     ssl: true
     password: example
 admin:
-  network: staticbox
+  network: chamber
   channel: chamberbnc-admin
 mail:
   server: 
