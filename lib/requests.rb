@@ -281,7 +281,7 @@ class RequestPlugin
     password = RequestDB.gen_key(15)
     netname = Domainatrix.parse(r.server).domain
     
-    $zncs[server].irc.send(msg_to_control("CloneUser templateuser #{r.username}"))
+    $zncs[server].irc.send(msg_to_control("CloneUser znc #{r.username}"))
     $zncs[server].irc.send(msg_to_control("Set Nick #{r.username} #{r.username}"))
     $zncs[server].irc.send(msg_to_control("Set AltNick #{r.username} #{r.username}_"))
     $zncs[server].irc.send(msg_to_control("Set Ident #{r.username} #{r.username}"))
