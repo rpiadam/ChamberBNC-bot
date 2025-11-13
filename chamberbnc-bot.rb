@@ -2,8 +2,7 @@
 ####
 ## chamberBNC administration bot
 ##
-## Copyright (c) 2022 Andrew Northall
-##
+
 ## MIT License
 ## See LICENSE file for details.
 ####
@@ -104,6 +103,19 @@ def validate_config!(config)
   config['bot']['channels'] = normalize_channels(bot_config['channels'])
   config['admin']['channel'] = config['admin']['channel'].to_s.start_with?('#') ? config['admin']['channel'] : "##{config['admin']['channel']}"
 
+  relay_config = config['relay']
+  if relay_config.nil?
+    config['relay'] = { 'channels' => ['#bnc.im'] }
+  elsif !relay_config.is_a?(Hash)
+    abort_with_config_error("Relay configuration must be a Hash")
+  else
+    channels = normalize_channels(relay_config['channels'])
+    if relay_config.key?('channels') && channels.empty?
+      abort_with_config_error("relay.channels must include at least one channel")
+    end
+    relay_config['channels'] = channels.empty? ? ['#bnc.im'] : channels
+  end
+
   config
 end
 
@@ -121,6 +133,7 @@ FileUtils.mkdir_p(LOG_DIR)
 
 bot_config = $config.fetch('bot')
 admin_config = $config.fetch('admin')
+relay_channels = $config.fetch('relay').fetch('channels').dup.freeze
 
 # Set up a bot for each server
 $config['servers'].each do |name, server|
@@ -148,6 +161,9 @@ $config['servers'].each do |name, server|
         c.sasl.password = bot_config['saslpass']
       end
       c.plugins.plugins = plugin_list_for(sasl_enabled)
+      c.plugins.options[RelayPlugin] = {
+        relay_channels: relay_channels.dup
+      }
       unless sasl_enabled
         c.plugins.options[Cinch::Plugins::Identify] = {
           username: bot_config['saslname'],
