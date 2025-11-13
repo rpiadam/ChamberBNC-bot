@@ -40,6 +40,12 @@ class Mail
 
       in either #chamberBNC or in a private message to the bot. If you need any help, please visit https://chamberirc.net/chat
 
+      Didn't make this request or changed your mind? You can safely cancel it by sending:
+
+      !delete #{id} #{code}
+
+      in the same place.
+
       Regards,
       ChamberBNC Team
 			https://chamberirc.net

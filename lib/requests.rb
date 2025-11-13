@@ -155,6 +155,7 @@ class RequestPlugin
   
   match /topic (.+)/, method: :topic
   match /approve\s+(\d+)\s+(\S+)/, method: :approve
+  match /delete\s+(\d+)\s+(\S+)/, method: :delete_with_key
   match /delete\s+(\d+)/, method: :delete
   match /reqinfo\s+(\d+)/, method: :reqinfo
   match "pending", method: :pending
@@ -374,6 +375,24 @@ class RequestPlugin
     m.reply format_status(r)
   end
   
+  def delete_with_key(m, id, key)
+    unless RequestDB.requests.has_key?(id.to_i)
+      m.reply "Error: request ##{id} not found. Double-check your code or contact an operator for help."
+      return
+    end
+
+    r = RequestDB.requests[id.to_i]
+
+    unless r.key == key
+      m.reply "Error: code does not match. If you need help, please contact an operator."
+      return
+    end
+
+    RequestDB.delete_id(id.to_i)
+    m.reply "Request ##{id} has been deleted. We're sorry to see you go—if this was a mistake, feel free to submit a new request anytime."
+    adminmsg("Request ##{id} deleted via user command by #{m.user}.")
+  end
+
   def delete(m, id)
     return unless m.channel == "#bnc.im-admin"
     unless RequestDB.requests.has_key?(id.to_i)
@@ -420,6 +439,7 @@ class RequestPlugin
     m.reply "#{Format(:bold, "Syntax: !request <user> <email> <server> [+]<port> [bnc.im server]")}. Parameters in brackets are not required. A + before the port denotes SSL. This command can be issued in a private message."
     m.reply "For example, a user called bncim-lover with an email of ilovebncs@mail.com who wants a bouncer for Interlinked on our chicago server would issue: " + \
              Format(:bold, "!request bncim-lover ilovebncs@mail.com irc.interlinked.me 6667 chicago")
+    m.reply "Changed your mind? Run #{Format(:bold, "!delete <id> <code>")} to safely cancel your request using the verification code emailed to you."
   end
 
   def web(m)
