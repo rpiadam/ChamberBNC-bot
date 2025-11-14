@@ -1,18 +1,18 @@
-TODO
-====
+Project Backlog
+===============
 
-Bot
----
+Bot Operations
+--------------
 
-- [ ] Connect to all networks with #bnc.im
-- [ ] Automatically reconnect on timeout
-- [ ] Identify to NickServ
-- [ ] Persist in joining #bnc.im related channels
+- [ ] Ensure the service connects to every configured network and joins `#bnc.im`.
+- [ ] Implement resilient reconnect handling for timeouts or dropped sessions.
+- [ ] Authenticate reliably with NickServ (SASL/NickServ fallback).
+- [ ] Rejoin all configured `#bnc.im`-related channels after reconnects.
 
-bnc.im
-------
+bnc.im Platform
+---------------
 
-- [ ] Handle user requests (verify email and create accounts)
-- [ ] Keep an email blacklist of abusive users
-- [ ] Handle relay of #bnc.im messages between networks
-- [ ] Global and server specific broadcasts from IRC
+- [ ] Process user onboarding requests end-to-end (email verification, account creation).
+- [ ] Maintain and enforce an email blacklist to block abusive sign-ups.
+- [ ] Relay `#bnc.im` traffic seamlessly across all linked networks.
+- [ ] Support both network-wide and per-server broadcast messages from IRC.
