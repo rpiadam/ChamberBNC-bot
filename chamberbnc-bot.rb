@@ -18,6 +18,7 @@ require 'lib/requests'
 require 'lib/relay'
 require 'lib/logger'
 require 'lib/mail'
+require 'lib/tickets'
 
 ROOT_DIR   = File.expand_path(__dir__)
 LOG_DIR    = File.join(ROOT_DIR, 'log')
@@ -76,6 +77,7 @@ def validate_config!(config)
   ensure_presence!(bot_config, 'saslpass', 'bot')
 
   ensure_presence!(config, 'requestdb')
+  config['ticketdb'] ||= File.join(ROOT_DIR, 'data', 'tickets.csv')
   ensure_presence!(admin_config, 'network', 'admin')
   ensure_presence!(admin_config, 'channel', 'admin')
 
@@ -120,7 +122,7 @@ def validate_config!(config)
 end
 
 def plugin_list_for(sasl_enabled)
-  plugins = [RelayPlugin, RequestPlugin]
+  plugins = [RelayPlugin, RequestPlugin, TicketPlugin]
   plugins << Cinch::Plugins::Identify unless sasl_enabled
   plugins
 end
@@ -206,6 +208,10 @@ end
 
 # Initialize the RequestDB
 RequestDB.load($config['requestdb'])
+
+# Initialize the TicketDB
+FileUtils.mkdir_p(File.dirname($config['ticketdb']))
+TicketDB.load($config['ticketdb'])
 
 threads = []
 
